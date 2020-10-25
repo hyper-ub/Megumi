@@ -1,15 +1,16 @@
 import datetime
 import html
 import textwrap
-
 import bs4
 import jikanpy
 import requests
+from Megumi.megumi import megumi
 from Megumi import DEV_USERS, OWNER_ID, SUDO_USERS, dispatcher
 from Megumi.modules.disable import DisableAbleCommandHandler
 from telegram import (InlineKeyboardButton, InlineKeyboardMarkup, ParseMode,
                       Update)
 from telegram.ext import CallbackContext, CallbackQueryHandler, run_async
+
 
 info_btn = "More Information"
 prequel_btn = "⬅️ Prequel"
@@ -25,7 +26,7 @@ def shorten(description, info='anilist.co'):
     else:
         msg += f"\n*Description*:_{description}_"
     return msg
-
+ 
 
 #time formatter from uniborg
 def t(milliseconds: int) -> str:
@@ -178,8 +179,7 @@ def airing(update: Update, context: CallbackContext):
     else:
         msg += f"\n*Episode*:{response['episodes']}\n*Status*: `N/A`"
     update.effective_message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
-
-
+        
 @run_async
 def anime(update: Update, context: CallbackContext):
     message = update.effective_message
@@ -278,9 +278,7 @@ def character(update: Update, context: CallbackContext):
                 photo=image, caption=msg, parse_mode=ParseMode.MARKDOWN)
         else:
             update.effective_message.reply_text(
-                msg, parse_mode=ParseMode.MARKDOWN)
-
-
+                msg, parse_mode=ParseMode.MARKDOWN)      
 @run_async
 def manga(update: Update, context: CallbackContext):
     message = update.effective_message
@@ -444,7 +442,6 @@ def upcoming(update: Update, context: CallbackContext):
         upcoming_message += f"{entry_num + 1}. {upcoming_list[entry_num]}\n"
 
     update.effective_message.reply_text(upcoming_message)
-
 
 def button(update: Update, context: CallbackContext):
     bot = context.bot

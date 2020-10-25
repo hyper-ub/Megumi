@@ -1,6 +1,9 @@
 import html
 
 import Megumi.modules.sql.userinfo_sql as sql
+import Megumi.modules.sql.global_bans_sql as gsql
+import Megumi.modules.sql.blacklistusers_sql as bsql
+import Megumi.modules.sql.afk_sql as asql
 from Megumi import DEV_USERS, SUDO_USERS, dispatcher
 from Megumi.modules.disable import DisableAbleCommandHandler
 from Megumi.modules.helper_funcs.extraction import extract_user
@@ -111,13 +114,7 @@ def set_about_bio(update: Update, context: CallbackContext):
                 "Erm... yeah, I only trust sudo users or developers to set my bio."
             )
             return
-
-        if user_id == DEV_USERS or SUDO_USERS and sender_id not in SUDO_USERS and sender_id not in DEV_USERS:
-            message.reply_text(
-                "Erm... yeah, I only trust sudo users or developers to set my master bio."
-            )
-            return
-
+        
         text = message.text
         bio = text.split(
             None, 1
@@ -137,6 +134,7 @@ def set_about_bio(update: Update, context: CallbackContext):
 
 
 def __user_info__(user_id):
+
     bio = html.escape(sql.get_user_bio(user_id) or "")
     me = html.escape(sql.get_user_me_info(user_id) or "")
     if bio and me:

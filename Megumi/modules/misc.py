@@ -27,6 +27,8 @@ from emoji import UNICODE_EMOJI
 from googletrans import LANGUAGES, Translator
 from Megumi.modules.helper_funcs.alternate import typing_action
 from Megumi.modules.sql import rss_sql as sql
+from Megumi.modules.sql import afk_sql as asql
+from Megumi.modules.sql import users_sql as usql
 from wikipedia.exceptions import DisambiguationError, PageError
 from telegram.ext import CallbackContext, CommandHandler, Filters, run_async
 from telegram.utils.helpers import mention_html
@@ -726,7 +728,7 @@ def ud(update: Update, context: CallbackContext):
     results = requests.get(
         f'https://api.urbandictionary.com/v0/define?term={text}').json()
     try:
-        reply_text = f'ℹ️ *{text}*\n\n👉🏻 {results["list"][0]["definition"]}\n\n📌 _{results["list"][0]["example"]}_'
+        reply_text = f'*{text}*\n\n{results["list"][0]["definition"]}\n\n_{results["list"][0]["example"]}_'
     except:
         reply_text = "No results found."
     message.reply_text(reply_text, parse_mode=ParseMode.MARKDOWN)
@@ -754,7 +756,6 @@ def get_id(update: Update, context: CallbackContext):
                 parse_mode=ParseMode.HTML)
 
         else:
-
             user = bot.get_chat(user_id)
             msg.reply_text(
                 f"{html.escape(user.first_name)}'s id is <code>{user.id}</code>.",
@@ -772,7 +773,6 @@ def get_id(update: Update, context: CallbackContext):
                 f"This group's id is <code>{chat.id}</code>.",
                 parse_mode=ParseMode.HTML)
 
-
 @run_async
 def gifid(update: Update, context: CallbackContext):
     msg = update.effective_message
@@ -784,123 +784,10 @@ def gifid(update: Update, context: CallbackContext):
         update.effective_message.reply_text(
             "Please reply to a gif to get its ID.")
 
-@run_async
-def totranslate(update: Update, context: CallbackContext):
-    msg = update.effective_message
-    problem_lang_code = []
-    for key in LANGUAGES:
-        if "-" in key:
-            problem_lang_code.append(key)
-    try:
-        if msg.reply_to_message and msg.reply_to_message.text:
-
-            args = update.effective_message.text.split(None, 1)
-            text = msg.reply_to_message.text
-            message = update.effective_message
-            dest_lang = None
-
-            try:
-                source_lang = args[1].split(None, 1)[0]
-            except:
-                source_lang = "en"
-
-            if source_lang.count('-') == 2:
-                for lang in problem_lang_code:
-                    if lang in source_lang:
-                        if source_lang.startswith(lang):
-                            dest_lang = source_lang.rsplit("-", 1)[1]
-                            source_lang = source_lang.rsplit("-", 1)[0]
-                        else:
-                            dest_lang = source_lang.split("-", 1)[1]
-                            source_lang = source_lang.split("-", 1)[0]
-            elif source_lang.count('-') == 1:
-                for lang in problem_lang_code:
-                    if lang in source_lang:
-                        dest_lang = source_lang
-                        source_lang = None
-                        break
-                if dest_lang is None:
-                    dest_lang = source_lang.split("-")[1]
-                    source_lang = source_lang.split("-")[0]
-            else:
-                dest_lang = source_lang
-                source_lang = None
-
-            exclude_list = UNICODE_EMOJI.keys()
-            for emoji in exclude_list:
-                if emoji in text:
-                    text = text.replace(emoji, '')
-
-            trl = Translator()
-            if source_lang is None:
-                detection = trl.detect(text)
-                tekstr = trl.translate(text, dest=dest_lang)
-                return message.reply_text(
-                    f"Translated from `{detection.lang}` to `{dest_lang}`:\n`{tekstr.text}`",
-                    parse_mode=ParseMode.MARKDOWN)
-            else:
-                tekstr = trl.translate(text, dest=dest_lang, src=source_lang)
-                message.reply_text(
-                    f"Translated from `{source_lang}` to `{dest_lang}`:\n`{tekstr.text}`",
-                    parse_mode=ParseMode.MARKDOWN)
-        else:
-            args = update.effective_message.text.split(None, 2)
-            message = update.effective_message
-            source_lang = args[1]
-            text = args[2]
-            exclude_list = UNICODE_EMOJI.keys()
-            for emoji in exclude_list:
-                if emoji in text:
-                    text = text.replace(emoji, '')
-            dest_lang = None
-            temp_source_lang = source_lang
-            if temp_source_lang.count('-') == 2:
-                for lang in problem_lang_code:
-                    if lang in temp_source_lang:
-                        if temp_source_lang.startswith(lang):
-                            dest_lang = temp_source_lang.rsplit("-", 1)[1]
-                            source_lang = temp_source_lang.rsplit("-", 1)[0]
-                        else:
-                            dest_lang = temp_source_lang.split("-", 1)[1]
-                            source_lang = temp_source_lang.split("-", 1)[0]
-            elif temp_source_lang.count('-') == 1:
-                for lang in problem_lang_code:
-                    if lang in temp_source_lang:
-                        dest_lang = None
-                        break
-                    else:
-                        dest_lang = temp_source_lang.split("-")[1]
-                        source_lang = temp_source_lang.split("-")[0]
-            trl = Translator()
-            if dest_lang is None:
-                detection = trl.detect(text)
-                tekstr = trl.translate(text, dest=source_lang)
-                return message.reply_text(
-                    "Translated from `{}` to `{}`:\n`{}`".format(
-                        detection.lang, source_lang, tekstr.text),
-                    parse_mode=ParseMode.MARKDOWN)
-            else:
-                tekstr = trl.translate(text, dest=dest_lang, src=source_lang)
-                message.reply_text(
-                    "Translated from `{}` to `{}`:\n`{}`".format(
-                        source_lang, dest_lang, tekstr.text),
-                    parse_mode=ParseMode.MARKDOWN)
-
-    except IndexError:
-        update.effective_message.reply_text(
-            "Reply to messages or write messages from other languages ​​for translating into the intended language\n\n"
-            "Example: `/tr en-ml` to translate from English to Malayalam\n"
-            "Or use: `/tr ml` for automatic detection and translating it into Malayalam.\n",
-            parse_mode="markdown",
-            disable_web_page_preview=True)
-    except ValueError:
-        update.effective_message.reply_text(
-            "The intended language is not found!")
-    else:
-        return
 
 @run_async
 @typing_action
+@run_async
 def info(update: Update, context: CallbackContext):
     bot, args = context.bot, context.args
     message = update.effective_message
@@ -913,11 +800,9 @@ def info(update: Update, context: CallbackContext):
     elif not message.reply_to_message and not args:
         user = message.from_user
 
-    elif not message.reply_to_message and (
-            not args or
-        (len(args) >= 1 and not args[0].startswith("@") and
-         not args[0].isdigit() and
-         not message.parse_entities([MessageEntity.TEXT_MENTION]))):
+    elif not message.reply_to_message and (not args or (
+            len(args) >= 1 and not args[0].startswith("@") and not args[0].isdigit() and not message.parse_entities(
+        [MessageEntity.TEXT_MENTION]))):
         message.reply_text("I can't extract a user from this.")
         return
 
@@ -936,20 +821,23 @@ def info(update: Update, context: CallbackContext):
 
     text += f"\nPermanent user link: {mention_html(user.id, 'link')}"
 
-    disaster_level_present = False
-
     if user.id == OWNER_ID:
         text += "\nThis person is my owner - I would never do anything against them!."
+        
     elif user.id in DEV_USERS:
         text += "\nThis person is my dev - I would never do anything against them!."
+        
     elif user.id in SUDO_USERS:
-        text += "\nThis person is one of my sudo users! Nearly as powerful as my owner - so watch it.."
+        text += "\nThis person is one of my sudo users! " \
+                    "Nearly as powerful as my owner - so watch it.."
+        
     elif user.id in SUPPORT_USERS:
-        text += "\nThis person is one of my sudo users! Nearly as powerful as my owner - so watch it.."
-    elif user.id in TIGER_USERS:
-        text += "\nThis person is one of my sudo users! Nearly as powerful as my owner - so watch it.."
+        text += "\nThis person is one of my support users! " \
+                        "Not quite a sudo user, but can still gban you off the map."
+       
     elif user.id in WHITELIST_USERS:
-        text += "\nThis person is one of my sudo users! Nearly as powerful as my owner - so watch it.."
+        text += "\nThis person has been whitelisted! " \
+                        "That means I'm not allowed to ban/kick them."
 
     try:
         user_member = chat.get_member(user.id)
@@ -972,6 +860,12 @@ def info(update: Update, context: CallbackContext):
         if mod_info:
             text += "\n\n" + mod_info
 
+    num_chats = usql.get_user_num_chats(user.id)
+    if user_id == dispatcher.bot.id:    
+            text += "\n\nI've seen them in... Wow. Are they stalking me? They're in all the same places I am... oh. It's me."
+    else:
+            text += f"\n\nI've seen them in <code>{num_chats}</code> groups."
+
     update.effective_message.reply_text(
         text, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
@@ -981,12 +875,10 @@ def info(update: Update, context: CallbackContext):
 def echo(update: Update, context: CallbackContext):
     args = update.effective_message.text.split(None, 1)
     message = update.effective_message
-
     if message.reply_to_message:
         message.reply_to_message.reply_text(args[1])
     else:
         message.reply_text(args[1], quote=False)
-
     message.delete()
 
 @run_async
@@ -1010,6 +902,7 @@ __help__ = """
  • `/id`*:* get the current group id. If used by replying to a message, gets that user's id.
  • `/gifid`*:* reply to a gif to me to tell you its file ID.
  • `/pat`*:* give a headpat :)
+ • `/reverse`*:* Reverse searches image or stickers on google.
  • `/weebify <text>`*:* returns a weebified text.
  • `/ud <word>`*:* Type the word or expression you want to search use.
  • `/info`*:* get information about a user.
@@ -1069,7 +962,7 @@ SNIPE_HANDLER = CommandHandler(
 STATS_HANDLER = CommandHandler(
     "stats",
     stats,
-    filters=Filters.user(DEV_USERS))
+    filters=Filters.user(SUDO_USERS))
 
 
 dispatcher.add_handler(SNIPE_HANDLER)

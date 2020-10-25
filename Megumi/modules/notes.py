@@ -3,19 +3,20 @@ from io import BytesIO
 from typing import Optional
 
 import Megumi.modules.sql.notes_sql as sql
-from Megumi import LOGGER, MESSAGE_DUMP, SUPPORT_CHAT, dispatcher
+from Megumi import LOGGER, MESSAGE_DUMP, SUPPORT_CHAT, SUDO_USERS, dispatcher
+from Megumi.modules.helper_funcs.alternate import typing_action
 from Megumi.modules.disable import DisableAbleCommandHandler
 from Megumi.modules.helper_funcs.chat_status import user_admin
 from Megumi.modules.helper_funcs.misc import (build_keyboard,
                                                     revert_buttons)
 from Megumi.modules.helper_funcs.msg_types import get_note_type
 from Megumi.modules.helper_funcs.string_handling import escape_invalid_curly_brackets
-from telegram import (MAX_MESSAGE_LENGTH, InlineKeyboardMarkup, Message,
-                      ParseMode, Update)
+from telegram import (MAX_MESSAGE_LENGTH, InlineKeyboardMarkup, InlineKeyboardButton, Message,
+                      ParseMode, Update, CallbackQuery)
 from telegram.error import BadRequest
 from telegram.utils.helpers import escape_markdown, mention_markdown
 from telegram.ext import (CallbackContext, CommandHandler, Filters,
-                          MessageHandler)
+                          MessageHandler, CallbackQueryHandler)
 from telegram.ext.dispatcher import run_async
 
 FILE_MATCHER = re.compile(r"^###file_id(!photo)?###:(.*?)(?:\s|$)")
@@ -236,6 +237,61 @@ def clear(update: Update, context: CallbackContext):
             update.effective_message.reply_text(
                 "That's not a note in my database!")
 
+@run_async
+@typing_action
+def clearall(update: Update, context: CallbackContext):
+    chat = update.effective_chat
+    user = update.effective_user
+    msg = update.effective_message
+    usermem = chat.get_member(user.id)
+    allnotes = sql.get_all_chat_notes(chat.id)
+
+    if not allnotes:
+        msg.reply_text("No notes in this chat, nothing to delete!")
+        return
+
+    if not usermem.status == "creator" and user.id not in SUDO_USERS:
+        msg.reply_text("This command can be only used by chat creator")
+        return
+    
+    else:
+      msg.reply_text(f"Are you sure you would like to stop All notes in {chat.title}? This cannot be undone.",
+                   reply_markup = InlineKeyboardMarkup([[
+            InlineKeyboardButton(
+                "Yes I'm sure", callback_data="n_stop")],
+            [InlineKeyboardButton(
+                "Cancel", callback_data="n_cancel")
+                   ]]))
+
+@run_async
+def clearall_button(update: Update, context: CallbackContext):
+    query = update.callback_query
+    chat = update.effective_chat  
+    user = update.effective_user
+    usermem = chat.get_member(user.id)
+    msg = update.effective_message
+    splitter = query.data.split('=')
+    query_match = splitter[0]
+    allnotes = sql.get_all_chat_notes(chat.id)
+    
+    if query.data == 'n_stop':
+        if usermem.status == "creator" or query.from_user.id in SUDO_USERS:
+            note_list = sql.get_all_chat_notes(chat.id)
+            try:
+                for notename in note_list:
+                    note = notename.name.lower()
+                    sql.rm_note(chat.id, note)
+                msg.edit_text(f"Successfully deleted All notes in {chat.title}.")
+            except BadRequest:
+                return
+        else:
+            query.answer("Only chat creator of this group can do this.")
+    
+    elif query_match == "n_cancel":
+      if usermem.status == "creator" or query.from_user.id in SUDO_USERS:
+         msg.edit_text("Deleting of all notes cancelled")
+      else:
+          msg.edit_text("Only chat creator can cancel this.")  
 
 @run_async
 def list_notes(update: Update, context: CallbackContext):
@@ -245,7 +301,7 @@ def list_notes(update: Update, context: CallbackContext):
     note_list = sql.get_all_chat_notes(chat_id)
     chat_name = chat.title or chat.username
     msg = "*List of notes in {}:*\n"
-    des = "You can get notes by using `/get notename`, or `#notename`.\n"
+    des = "You can get notes by using `/get notename`, or `#notename`."
     for note in note_list:
         note_name = (" • `#{}`\n".format(note.name))
         if len(msg) + len(note_name) > MAX_MESSAGE_LENGTH:
@@ -403,7 +459,7 @@ def __chat_settings__(chat_id, user_id):
 
 __help__ = """
  • `/get <notename>`*:* get the note with this notename
- • `#<notename>`*:* same as /get
+ • `#<notename>`*:* same as `/get`
  • `/notes` or `/saved`*:* list all saved notes in this chat
 
 If you would like to retrieve the contents of a note without any formatting, use `/get <notename> noformat`. This can \
@@ -415,6 +471,7 @@ A button can be added to a note by using standard markdown link syntax - the lin
 `buttonurl:` section, as such: `[somelink](buttonurl:example.com)`. Check `/markdownhelp` for more info.
  • `/save <notename>`*:* save the replied message as a note with name notename
  • `/clear <notename>`*:* clear note with this name
+ • `/clearall`*:* remove all chat notes at once, this cannot be undone. `(chat creator only)`
  *Note:* Note names are case-insensitive, and they are automatically converted to lowercase before getting saved.
 """
 
@@ -424,13 +481,16 @@ GET_HANDLER = CommandHandler("get", cmd_get)
 HASH_GET_HANDLER = MessageHandler(Filters.regex(r"^#[^\s]+"), hash_get)
 SAVE_HANDLER = CommandHandler("save", save)
 DELETE_HANDLER = CommandHandler("clear", clear)
-
+CLEARALLNOTE_HANDLER = CommandHandler("clearall", clearall, filters=Filters.group)
+CLEARALL_CALLBACK_HANDLER = CallbackQueryHandler(clearall_button, pattern=r"n_")
 LIST_HANDLER = DisableAbleCommandHandler(["notes", "saved"],
                                          list_notes,
                                          admin_ok=True)
 
 dispatcher.add_handler(GET_HANDLER)
 dispatcher.add_handler(SAVE_HANDLER)
+dispatcher.add_handler(CLEARALLNOTE_HANDLER)
+dispatcher.add_handler(CLEARALL_CALLBACK_HANDLER)                     
 dispatcher.add_handler(LIST_HANDLER)
 dispatcher.add_handler(DELETE_HANDLER)
 dispatcher.add_handler(HASH_GET_HANDLER)

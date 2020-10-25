@@ -361,7 +361,7 @@ def __chat_settings__(chat_id, user_id):
 
 
 __help__ = """
- • `/adminlist`*:* list of admins in the chat
+ • `/adminlist`or `/admins`*:* list of admins in the chat
 
 *Admins only:*
  • `/pin`*:* silently pins the message replied to - add `'loud'` or `'notify'` to give notifs to users.

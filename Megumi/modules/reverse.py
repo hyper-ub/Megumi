@@ -12,6 +12,7 @@ from telegram import Update
 from telegram.ext import CallbackContext, run_async
 
 from Megumi import dispatcher
+from Megumi.modules.helper_funcs.alternate import typing_action
 from Megumi.modules.disable import DisableAbleCommandHandler
 
 opener = urllib.request.build_opener()
@@ -19,6 +20,7 @@ useragent = 'Mozilla/5.0 (Linux; Android 6.0.1; SM-G920V Build/MMB29K) AppleWebK
 opener.addheaders = [('User-agent', useragent)]
 
 @run_async
+@typing_action
 def reverse(update: Update, context:CallbackContext):
     if os.path.isfile("okgoogle.png"):
         os.remove("okgoogle.png")

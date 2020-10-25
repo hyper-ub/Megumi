@@ -24,6 +24,7 @@ PM_START_TEXT = """
 Hi *{}*, my name is *Megumi Kato*!\n
 I am an Anime themed group management bot with a lot of Special Features.\n
 You can find my list of available commands with /help.
+\nAny issues or need help related to me? join our group [Megumi Support](https://t.me/blessingsupport).
 \nWanna Add me to your Group? Just click the button below!
 """
 MEGUMI_IMG = "https://telegra.ph/file/aebaa70957ff54d9a816d.jpg"
@@ -118,6 +119,7 @@ def megumi_about_callback(update: Update, context: CallbackContext):
     if query.data == "aboutmanu_":
         query.message.edit_text(
             text="*Megumi is a bot for managing your group with additional features*,"
+                 "\nand is fork of [Saitama](https://github.com/AnimeKaizoku/SaitamaRobot)."
                  "\n\nMegumi's licensed under the GNU General Public License v3.0,"
                  "\nhere is the [repository](https://github.com/Unknown746/Megumi)."
                  "\n\nIf you have any question about Megumi, let us know at @BlessingSupport.",
@@ -364,7 +366,7 @@ def settings_button(update: Update, context: CallbackContext):
             text = "*{}* has the following settings for the *{}* module:\n\n".format(escape_markdown(chat.title),
                                                                                      CHAT_SETTINGS[module].__mod_name__) + \
                    CHAT_SETTINGS[module].__chat_settings__(chat_id, user.id)
-            query.message.reply_text(
+            query.message.edit_text(
                 text=text,
                 parse_mode=ParseMode.MARKDOWN,
                 reply_markup=InlineKeyboardMarkup([[
@@ -377,7 +379,7 @@ def settings_button(update: Update, context: CallbackContext):
             chat_id = prev_match.group(1)
             curr_page = int(prev_match.group(2))
             chat = bot.get_chat(chat_id)
-            query.message.reply_text(
+            query.message.edit_text(
                 "Hi there! There are quite a few settings for {} - go ahead and pick what "
                 "you're interested in.".format(chat.title),
                 reply_markup=InlineKeyboardMarkup(
@@ -388,7 +390,7 @@ def settings_button(update: Update, context: CallbackContext):
             chat_id = next_match.group(1)
             next_page = int(next_match.group(2))
             chat = bot.get_chat(chat_id)
-            query.message.reply_text(
+            query.message.edit_text(
                 "Hi there! There are quite a few settings for {} - go ahead and pick what "
                 "you're interested in.".format(chat.title),
                 reply_markup=InlineKeyboardMarkup(
@@ -398,7 +400,7 @@ def settings_button(update: Update, context: CallbackContext):
         elif back_match:
             chat_id = back_match.group(1)
             chat = bot.get_chat(chat_id)
-            query.message.reply_text(
+            query.message.edit_text(
                 text="Hi there! There are quite a few settings for {} - go ahead and pick what "
                 "you're interested in.".format(escape_markdown(chat.title)),
                 parse_mode=ParseMode.MARKDOWN,
@@ -407,7 +409,6 @@ def settings_button(update: Update, context: CallbackContext):
 
         # ensure no spinny white circle
         bot.answer_callback_query(query.id)
-        query.message.delete()
     except BadRequest as excp:
         if excp.message == "Message is not modified":
             pass
@@ -514,6 +515,60 @@ def main():
 
     updater.idle()
 
+
+CHATS_CNT = {}
+CHATS_TIME = {}
+
+
+def process_update(self, update):
+    # An error happened while polling
+    if isinstance(update, TelegramError):
+        try:
+            self.dispatch_error(None, update)
+        except Exception:
+            self.logger.exception('An uncaught error was raised while handling the error')
+        return
+
+    now = datetime.datetime.utcnow()
+    cnt = CHATS_CNT.get(update.effective_chat.id, 0)
+
+    t = CHATS_TIME.get(update.effective_chat.id, datetime.datetime(1970, 1, 1))
+    if t and now > t + datetime.timedelta(0, 1):
+        CHATS_TIME[update.effective_chat.id] = now
+        cnt = 0
+    else:
+        cnt += 1
+
+    if cnt > 10:
+        return
+
+    CHATS_CNT[update.effective_chat.id] = cnt
+    for group in self.groups:
+        try:
+            for handler in (x for x in self.handlers[group] if x.check_update(update)):
+                handler.handle_update(update, self)
+                break
+
+        # Stop processing with any other handler.
+        except DispatcherHandlerStop:
+            self.logger.debug('Stopping further handlers due to DispatcherHandlerStop')
+            break
+
+        # Dispatch any error.
+        except TelegramError as te:
+            self.logger.warning('A TelegramError was raised while processing the Update')
+
+            try:
+                self.dispatch_error(update, te)
+            except DispatcherHandlerStop:
+                self.logger.debug('Error handler stopped further handlers')
+                break
+            except Exception:
+                self.logger.exception('An uncaught error was raised while handling the error')
+
+        # Errors should not stop the thread.
+        except Exception:
+            self.logger.exception('An uncaught error was raised while processing the update')
 
 if __name__ == '__main__':
     LOGGER.info("Successfully loaded modules: " + str(ALL_MODULES))

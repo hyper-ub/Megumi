@@ -129,24 +129,8 @@ def list_chatbot_chats(update: Update, context: CallbackContext):
 
 __mod_name__ = "Chatbot"
 
-__help__ = f"""
-Chatbot utilizes the CoffeeHouse API and allows Megumi to talk and provides a more interactive group chat experience.
-
-This is an ongoing upgrade and is only available in your chats if you reach out to {SUPPORT_CHAT} and ask for it.
-In future we might make it open for any chat and controllable by group admins.
-
-*Commands:* 
-*These only work for Megumi Moderators:*
- • `/addchat`*:* Enables Chatbot mode in the chat.
- • `/rmchat`*:* Disables Chatbot mode in the chat.
- • `/listaichats`*:* Lists the chats the chatmode is enabled in.
-
-*Powered by CoffeeHouse* (https://coffeehouse.intellivoid.net/) from @Intellivoid
-"""
-
-ADD_CHAT_HANDLER = CommandHandler("addchat", add_chat, filters=CustomFilters.sudo_filter)
-REMOVE_CHAT_HANDLER = CommandHandler("rmchat", remove_chat, filters=CustomFilters.sudo_filter)
-CHATBOT_REGEX_HANDLER = MessageHandler(Filters.regex(r"(?i)megumi"), chatbot, friendly="chatbot")
+ADD_CHAT_HANDLER = CommandHandler("addchat", add_chat, filters=CustomFilters.dev_filter)
+REMOVE_CHAT_HANDLER = CommandHandler("rmchat", remove_chat, filters=CustomFilters.dev_filter)
 CHATBOT_HANDLER = MessageHandler(
     Filters.text & (~Filters.regex(r"^#[^\s]+") & ~Filters.regex(r"^!")
                     & ~Filters.regex(r"^\/")), chatbot)
@@ -157,5 +141,4 @@ LIST_CB_CHATS_HANDLER = CommandHandler(
 dispatcher.add_handler(ADD_CHAT_HANDLER)
 dispatcher.add_handler(REMOVE_CHAT_HANDLER)
 dispatcher.add_handler(CHATBOT_HANDLER)
-dispatcher.add_handler(CHATBOT_REGEX_HANDLER)
 dispatcher.add_handler(LIST_CB_CHATS_HANDLER)

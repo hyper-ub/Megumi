@@ -127,8 +127,9 @@ def bl_users(update: Update, context: CallbackContext):
 
     update.effective_message.reply_text(message, parse_mode=ParseMode.HTML)
 
-
+    
 def __user_info__(user_id):
+
     is_blacklisted = sql.is_user_blacklisted(user_id)
 
     text = "Blacklisted: <b>{}</b>"

@@ -1,5 +1,6 @@
 import random
 import html
+import time
 
 from Megumi import dispatcher
 from Megumi.modules.disable import (DisableAbleCommandHandler)
@@ -11,9 +12,23 @@ from telegram.ext import CallbackContext, Filters, MessageHandler, run_async
 
 AFK_GROUP = 7
 AFK_REPLY_GROUP = 8
+TIME = 0.0
+
+def time_formatter(seconds: float) -> str:
+    """ humanize time """
+    minutes, seconds = divmod(int(seconds), 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    tmp = ((str(days) + "d, ") if days else "") + \
+        ((str(hours) + "h, ") if hours else "") + \
+        ((str(minutes) + "m, ") if minutes else "") + \
+        ((str(seconds) + "s, ") if seconds else "")
+    return tmp[:-2]
 
 @run_async
 def afk(update: Update, context: CallbackContext):
+    global TIME
+    TIME = time.time()
     args = update.effective_message.text.split(None, 1)
     notice = ""
     if len(args) >= 2:
@@ -32,6 +47,7 @@ def afk(update: Update, context: CallbackContext):
 
 @run_async
 def no_longer_afk(update: Update, context: CallbackContext):
+    afk_time = time_formatter(round(time.time() - TIME))
     user = update.effective_user
     message = update.effective_message
 
@@ -44,13 +60,7 @@ def no_longer_afk(update: Update, context: CallbackContext):
             return
         firstname = update.effective_user.first_name
         try:
-            options = [
-                '{} is here!', '{} is back!', '{} is now in the chat!',
-                '{} is awake!', '{} is back online!', '{} is finally here!',
-                'Welcome back! {}', 'Where is {}?\nIn the chat!'
-            ]
-            chosen_option = random.choice(options)
-            update.effective_message.reply_text(chosen_option.format(firstname))
+            update.effective_message.reply_text("{} is no longer AFK!\nAFK time: {}".format(firstname, afk_time))
         except:
             return
 
@@ -107,28 +117,31 @@ def reply_afk(update: Update, context: CallbackContext):
 
 
 def check_afk(update, context, user_id, fst_name, userc_id):
+    afk_time = time_formatter(round(time.time() - TIME))
     if sql.is_afk(user_id):
         user = sql.check_afk_status(user_id)
         if not user.reason:
             if int(userc_id) == int(user_id):
                 return
-            res = "{} is afk".format(fst_name)
+            res = "{} is AFK! \nSince: {}".format(fst_name, afk_time)
             update.effective_message.reply_text(res)
         else:
             if int(userc_id) == int(user_id):
                 return
-            res = "{} is afk.\nReason: {}".format(fst_name, user.reason)
+            res = "{} is AFK!\nReason: {}\nSince: {}".format(fst_name, user.reason, afk_time)
             update.effective_message.reply_text(res)
 
 def __user_info__(user_id):
-    text = "Currently AFK: <b>{}</b>"
-    if sql.is_afk(user_id):
-        text = text.format("Yes")
-        user = sql.check_afk_status(user_id)
-        if user.reason:
-              text += "\nReason: <code>{}</code>".format(html.escape(user.reason))
-    else:
-         text = text.format("No")
+    if user_id == dispatcher.bot.id:    
+        return ""   
+    text = "Currently AFK: <b>{}</b>"   
+    if sql.is_afk(user_id):    
+        text = text.format("Yes")   
+        user = sql.check_afk_status(user_id)   
+        if user.reason: 
+              text += "\nReason: <code>{}</code>".format(html.escape(user.reason))  
+    else:   
+         text = text.format("No")   
     return text
 
 

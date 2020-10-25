@@ -446,12 +446,8 @@ def check_gbans(update: Update, context:CallbackContext):
     else:
         update.message.reply_text("No deleted accounts in the gbanlist!")
 
-
-def __stats__():
-    return "{} gbanned users.".format(sql.num_gbanned_users())
-
-
 def __user_info__(user_id):
+    
     is_gbanned = sql.is_user_gbanned(user_id)
 
     text = "Globally banned: <b>{}</b>"
@@ -468,6 +464,9 @@ def __user_info__(user_id):
     else:
         text = text.format("No")
     return text
+
+def __stats__():
+    return "{} gbanned users.".format(sql.num_gbanned_users())
 
 
 def __migrate__(old_chat_id, new_chat_id):

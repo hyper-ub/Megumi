@@ -1,5 +1,4 @@
 import sre_constants
-
 import regex
 import telegram
 from Megumi import LOGGER, dispatcher
@@ -117,9 +116,6 @@ def sed(update: Update, context: CallbackContext):
 
 __mod_name__ = "Sed/Regex"
 
-SED_HANDLER = DisableAbleMessageHandler(
-    Filters.regex(r's([{}]).*?\1.*'.format("".join(DELIMITERS))),
-    sed,
-    friendly="sed")
+SED_HANDLER = DisableAbleMessageHandler(Filters.regex(r's([{}]).*?\1.*'.format("".join(DELIMITERS))),sed,friendly="sed")
 
 dispatcher.add_handler(SED_HANDLER)
