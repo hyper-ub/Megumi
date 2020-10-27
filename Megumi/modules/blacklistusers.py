@@ -37,7 +37,7 @@ def bl_user(update: Update, context: CallbackContext) -> str:
         return ""
 
     if user_id in BLACKLISTWHITELIST:
-        message.reply_text("No! This user is my bish i cant ignore them.")
+        message.reply_text("No! This user is one of my sudo i can't ignore them.")
         return ""
 
     try:
