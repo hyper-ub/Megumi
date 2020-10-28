@@ -1,5 +1,5 @@
 # Megumi 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/eb267c491b054cbc8691fd0a226a0cbd)](https://app.codacy.com/manual/Unknown746/Megumi?utm_source=github.com&utm_medium=referral&utm_content=Unknown746/Megumi&utm_campaign=Badge_Grade_Settings) [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity) [![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://perso.crans.org/besson/LICENSE.html) [![Open Source Love svg2](https://badges.frapsoft.com/os/v2/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/eb267c491b054cbc8691fd0a226a0cbd)](https://app.codacy.com/manual/Unknown746/Megumi?utm_source=github.com&utm_medium=referral&utm_content=Unknown746/Megumi&utm_campaign=Badge_Grade_Settings) [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Unknown746/Megumi/graphs/commit-activity) [![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://perso.crans.org/besson/LICENSE.html) [![Open Source Love svg2](https://badges.frapsoft.com/os/v2/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
 
 
 A modular Telegram Python bot running on python3 with a sqlalchemy database.
@@ -17,7 +17,7 @@ News channel as at [Megumi Updates](https://t.me/BlessingUpdates)
 ### Read these notes carefully before proceeding 
  - Edit any mentions of @BlessingSupport to your own support chat. 
  - We do not support forks, once you fork the bot and deploy the headache of bugs and support is your own, please do not come to our support chat asking technical help.
- - Your code must be open source and a link to your fork's repository must be there in the start reply of the bot. [See this](https://github.com/https://github.com/Unknown746/Megumi)
+ - Your code must be open source and a link to your fork's repository must be there in the start reply of the bot. [See this](https://github.com/Unknown746/Megumi)
  - If you come to our support chat on Telegram asking help about a "fork" or a technical issue with a module, you will end up getting ignored or banned. 
  - Lastly, if you are found to run this repo without the code being open sourced or the repository link not mentioned in the bot, we will push a gban for you in our network because of being in violation of the license, you are free to be a dick and not respect the open source code (we do not mind) but we will not be having you around our chats.
 
